@@ -1,15 +1,23 @@
 import streamlit as st
-from fetch_data import get_option_data
-from export_excel import save_to_excel
+from data_processing import fetch_options_data
+import pandas as pd
 
-st.title("Options Data Tracker")
+st.title("Options Data Viewer")
 
-stock_name = st.text_input("Enter Stock Symbol:", "AAPL").upper()
+symbol = st.text_input("Enter Stock Symbol:", "AAPL")
 
 if st.button("Fetch Data"):
-    ce, pe = get_option_data(stock_name)
-    if ce is not None and pe is not None:
-        save_to_excel(stock_name, ce, pe)
-        st.success(f"Excel file saved as {stock_name}_OI_Data.xlsx")
-        st.dataframe(ce)  # Display CE Data
-        st.dataframe(pe)  # Display PE Data
+    calls, puts = fetch_options_data(symbol)
+    
+    if calls is not None and puts is not None:
+        st.subheader("Call Options Data")
+        st.dataframe(calls)
+        
+        st.subheader("Put Options Data")
+        st.dataframe(puts)
+
+        if st.button("Download Excel"):
+            with pd.ExcelWriter(f"{symbol}_options.xlsx") as writer:
+                calls.to_excel(writer, sheet_name="Call Options", index=False)
+                puts.to_excel(writer, sheet_name="Put Options", index=False)
+            st.success(f"File saved as {symbol}_options.xlsx")
